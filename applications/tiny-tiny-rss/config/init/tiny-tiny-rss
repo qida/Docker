@@ -1,0 +1,2 @@
+cp -r /app/*.local /app/cache /app/feed-icons /app/lock /data
+ln -fs /data/* /app

@@ -1,0 +1,45 @@
+[ -d /dev/net ] || mkdir -p /dev/net
+[ -c /dev/net/tun ] || mknod /dev/net/tun c 10 200
+cd /data
+IP=$(curl -s http://myip.enix.org/REMOTE_ADDR)
+if [ ! "$(ls -A /data)" ]; then
+	openssl dhparam -out dh.pem 2048
+	openssl genrsa -out server.key 2048
+	openssl req -new -subj /CN=OpenVPN/ -key server.key -out server.csr
+	openssl x509 -req -in server.csr -out server.crt -signkey server.key -days 3650
+fi
+chmod 600 server.key
+cd /config
+ln -fs /data/* .
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+cat > client.ovpn << EOF
+client
+dev tun
+<connection>
+remote $IP 1194 udp
+</connection>
+<connection>
+remote $IP 443 tcp
+</connection>
+<ca>
+$(cat server.crt)
+</ca>
+<cert>
+$(cat server.crt)
+</cert>
+<dh>
+$(cat dh.pem)
+</dh>
+<key>
+$(cat server.key)
+</key>
+EOF
+
+cat > client.http << EOF
+HTTP/1.0 200 OK
+Content-Type: application/x-openvpn-profile
+Content-Length: $(wc -c client.ovpn)
+
+$(cat client.ovpn)
+EOF

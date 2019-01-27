@@ -1,12 +1,13 @@
 FROM maxexcloo/nginx:latest
 MAINTAINER Max Schaefer <max@excloo.com>
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E9C74FEEA2098A6E && \
-	echo "deb http://packages.dotdeb.org/ wheezy-php56 all" > /etc/apt/sources.list.d/php.list && \
+RUN curl https://www.dotdeb.org/dotdeb.gpg | apt-key add - && \
+	echo "deb http://packages.dotdeb.org/ jessie all" > /etc/apt/sources.list.d/dotdeb.list && \
 	apt-get update && \
-	apt-get install -y php5-cli php5-curl php5-fpm php5-gd php5-mcrypt php5-mysql php5-pgsql php5-sqlite && \
+	apt-get install -y php-cli php-curl php-fpm php-gd php-mbstring php-mcrypt php-mysql php-pgsql php-sqlite3 && \
 	apt-get clean && \
-	echo -n > /var/lib/apt/extended_states
-RUN rm -rf /etc/nginx/addon.d /etc/php5/fpm/pool.d && \
-	mkdir -p /etc/nginx/addon.d /etc/php5/fpm/pool.d
+	echo -n > /var/lib/apt/extended_states && \
+	rm -rf /tmp/* /var/lib/apt/lists/* /var/tmp/*
+RUN rm -rf /etc/php/7.0/fpm/pool.d && \
+	mkdir -p /etc/php/7.0/fpm/pool.d
 ADD etc /etc
 ADD supervisord.conf /etc/supervisor/conf.d/php-fpm.conf
